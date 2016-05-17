@@ -11,14 +11,17 @@ bot.on("message", function(msg) {
         allLinks = name.split("\u200B");
 
         allLinks.pop();
+        unique = allLinks.filter(onlyUnique);
         replyString = "**Wiki links detected:**";
 
-        for (item in allLinks) {
-            allLinks[item] = allLinks[item].trim();
+        for (item in unique) {
+            if (unique.hasOwnProperty(item)) {
+                unique[item] = unique[item].trim();
 
-            reqAPI(allLinks[item], function() {
-                replyString += "\n<" + this + ">";
-            })
+                reqAPI(unique[item], function () {
+                    replyString += "\n<" + this + ">";
+                })
+            }
         }
         setTimeout(function() {bot.sendMessage(msg.channel, replyString);}, 1000);
     }
@@ -43,6 +46,10 @@ function reqAPI(requestname, callback) {
             console.log("Response code: " + response.statusCode);
         }
     });
+}
+
+function onlyUnique(value, index, self) {
+    return self.indexOf(value) === index;
 }
 
 bot.loginWithToken(config.token);
