@@ -23,7 +23,20 @@ bot.on("message", function(msg) {
                 })
             }
         }
-        setTimeout(function() {bot.sendMessage(msg.channel, replyString);}, 1000);
+
+        setTimeout(function () {
+            if (replyString !== "**Wiki links detected:**") {
+                bot.sendMessage(msg.channel, replyString);
+            }
+        }, 1000);
+    }
+    else if (msg.content.startsWith("%restart")) {
+        if (msg.author.id === config.admin_snowflake) {
+            bot.reply(msg, "okay!");
+            setTimeout(function() {process.exit(1);}, 100);
+        } else {
+            bot.reply(msg, "no. Just no.");
+        }
     }
 });
 
@@ -52,4 +65,9 @@ function onlyUnique(value, index, self) {
     return self.indexOf(value) === index;
 }
 
-bot.loginWithToken(config.token);
+if (config.admin_snowflake === '') {
+    console.log("Admin snowflake empty. Startup disallowed.");
+    process.exit(1);
+} else {
+    bot.loginWithToken(config.token);
+}
