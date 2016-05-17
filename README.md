@@ -3,10 +3,12 @@ A Discord bot for linking RuneScape Wiki articles.
 
 # Syntax
 `[[<article name>]]` -> `http://rs.wikia.com/<article_name>?action=view`
+
 eg. `[[Corporeal beast]]` -> `http://rs.wikia.com/Corporeal_beast?action=view`
 
 # Inviting it
 Click the following link (**Must be the owner of the channel**): https://discordapp.com/oauth2/authorize?&client_id=182146444357140480&scope=bot&permissions=0
+
 Note that it has no permissions when added, and must be done manually by changing the bot's role.
 
 # Running it yourself
