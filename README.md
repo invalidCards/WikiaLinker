@@ -1,0 +1,19 @@
+# RSWikiLinker
+A Discord bot for linking RuneScape Wiki articles.
+
+# Syntax
+`[[<article name>]]` -> `http://rs.wikia.com/<article_name>?action=view`
+eg. `[[Corporeal beast]]` -> `http://rs.wikia.com/Corporeal_beast?action=view`
+
+# Inviting it
+Click the following link (**Must be the owner of the channel**): https://discordapp.com/oauth2/authorize?&client_id=182146444357140480&scope=bot&permissions=0
+Note that it has no permissions when added, and must be done manually by changing the bot's role.
+
+# Running it yourself
+1. Download the repository.
+2. Make sure you have NodeJS and NPM with all of its dependencies installed.
+3. `npm install`
+4. Make a `config.json` file; an example is provided. Fill the fields with:
+  * `token` contains the token of the bot account used.
+  * `admin_snowflake` contains the ID of the admin user. Currently unused, may be left blank.
+5. `node wikilinker.js` to run it!
