@@ -10,7 +10,7 @@ eg. `[[Corporeal beast]]` -> `http://rs.wikia.com/Corporeal_beast?action=view`
 `%restart` - Restarts the bot. **The bot *must* be run under a process manager such as PM2, otherwise this will just error out the bot!**
 
 # Inviting it
-Click the following link (**Must be the owner of the channel**): https://discordapp.com/oauth2/authorize?&client_id=182146444357140480&scope=bot&permissions=0
+Click the following link (**Must be the owner of the channel**): *The bot is offline and no longer hosted by me. Feel free to clone the source and host it yourself.*
 
 Note that it has no permissions when added, and must be done manually by changing the bot's role.
 
