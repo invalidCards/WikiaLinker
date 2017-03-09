@@ -26,4 +26,5 @@ The bot only has read message and send message permissions when added - addition
 4. Make a `config.json` file; an example is provided. Fill the fields with:
   * `token` contains the token of the bot account used.
   * `admin_snowflake` contains the ID of the admin user. **REQUIRED FOR THE BOT TO START UP.**
+  * `prefix` the prefix to activate restart/ help commands.
 5. `node wikilinker.js` to run it!
