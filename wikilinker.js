@@ -66,6 +66,9 @@ bot.on("message", function(msg) {
 			}
 		}
 	}
+	if (msg.content.startsWith("%help")) {
+		msg.channel.sendMessage("Syntax and commands: <https://github.com/ThePsionic/RSWikiLinker#syntax>");
+	}
     if (msg.content.startsWith("%restart")) {
         if (msg.author.id === config.admin_snowflake) {
             msg.channel.sendMessage("**Bot restarting!**");

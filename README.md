@@ -8,6 +8,9 @@ A Discord bot for linking RuneScape Wiki articles.
 
 `--<raw article>--` -> `http://rs.wikia.com/<raw_article>` (bypasses Wikia API)
 
+## Other commands
+`%help` - Links to this README.
+
 ## Admin commands
 `%restart` - Restarts the bot. **The bot *must* be run under a process manager such as PM2, otherwise this will just error out the bot!**
 
