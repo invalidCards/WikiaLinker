@@ -65,7 +65,7 @@ const commands = {
 		msg.channel.sendMessage('Syntax and commands: <https://github.com/ThePsionic/RSWikiLinker#syntax>');
 	},
 	restart: (msg) => {
-		if (msg.author.id !== config.admin_snowflake) msg.channel.sendMessage("Sorry, Dave. I can't let you do that.");
+		if (msg.author.id !== config.admin_snowflake) return msg.channel.sendMessage("Sorry, Dave. I can't let you do that.");
 		msg.channel.sendMessage('**Bot restarting!**')
 			.then(() => {
 				process.exit(1);
