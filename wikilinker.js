@@ -6,6 +6,7 @@ var bot = new Discord.Client();
 
 bot.on("message", function(msg) {
     if (msg.cleanContent.search(/\[\[([^\]\|]+)(?:|[^\]]+)?\]\]/g) !== -1) {
+		var channel = msg.channel;
         cleaned = msg.cleanContent.replace(/\u200B/g, "");
         name = cleaned.replace(/.*?\[\[([^\]\|]+)(?:|[^\]]+)?\]\]/g, "$1\u200B");
         allLinks = name.split("\u200B");
@@ -26,7 +27,7 @@ bot.on("message", function(msg) {
 
         setTimeout(function () {
             if (replyString !== "**Wiki links detected:**") {
-                bot.sendMessage(msg.channel, replyString);
+                channel.sendMessage(replyString);
             }
         }, 1000);
     }
@@ -41,7 +42,7 @@ bot.on("message", function(msg) {
 });
 
 bot.on("disconnected", function() {
-    bot.loginWithToken(config.token);
+    bot.login(config.token);
 });
 
 function reqAPI(requestname, callback) {
@@ -69,5 +70,5 @@ if (config.admin_snowflake === '') {
     console.log("Admin snowflake empty. Startup disallowed.");
     process.exit(1);
 } else {
-    bot.loginWithToken(config.token);
+    bot.login(config.token);
 }
