@@ -2,9 +2,9 @@
 A Discord bot for linking RuneScape Wiki articles.
 
 # Syntax
-`[[<article name>]]` -> `http://rs.wikia.com/<article_name>?action=view`
-
-eg. `[[Corporeal beast]]` -> `http://rs.wikia.com/Corporeal_beast?action=view`
+`[[<article name>]]` -> `http://rs.wikia.com/<article_name>`
+`{{<template name>}}` -> `http://rs.wikia.com/Template:<template_name>`
+`--<raw article>--` -> `http://rs.wikia.com/<raw_article>` (bypasses Wikia API)
 
 ## Admin commands
 `%restart` - Restarts the bot. **The bot *must* be run under a process manager such as PM2, otherwise this will just error out the bot!**
