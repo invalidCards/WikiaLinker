@@ -46,6 +46,7 @@ bot.on('message', (msg) => {
 
 		Promise.all(mps)
 			.then(preparedSend => {
+				preparedSend = preparedSend.filter(item => item !== undefined);
 				if (preparedSend.length > 1) {
 					console.log('Sending message...');
 					msg.channel.sendMessage(preparedSend);
