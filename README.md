@@ -3,7 +3,9 @@ A Discord bot for linking RuneScape Wiki articles.
 
 # Syntax
 `[[<article name>]]` -> `http://rs.wikia.com/<article_name>`
+
 `{{<template name>}}` -> `http://rs.wikia.com/Template:<template_name>`
+
 `--<raw article>--` -> `http://rs.wikia.com/<raw_article>` (bypasses Wikia API)
 
 ## Admin commands
