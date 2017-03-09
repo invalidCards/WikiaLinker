@@ -23,7 +23,6 @@ bot.on("message", function(msg) {
 
                 reqAPI(unique[item], function () {
                     prepareSend(this);
-					console.log(preparedSend);
                 })
             }
         }
@@ -43,7 +42,6 @@ bot.on("message", function(msg) {
 
                 reqAPI(unique[item], function () {
                     prepareSend(this);
-					console.log(preparedSend);
                 })
             }
         }
@@ -62,7 +60,6 @@ bot.on("message", function(msg) {
                 unique[item] = unique[item].trim();
 				unique[item] = unique[item].replace(/\s/g, "_");
 				prepareSend("http://runescape.wikia.com/wiki/" + unique[item]);
-				console.log(preparedSend);
 			}
 		}
 	}
