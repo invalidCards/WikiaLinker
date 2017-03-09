@@ -1,6 +1,6 @@
 {
   "name": "wikilinker",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "dependencies": {
     "discord.js": "^11.0.0",
     "request": "2.72.0"
