@@ -46,6 +46,7 @@ bot.on('message', (msg) => {
 
 		Promise.all(mps)
 			.then(preparedSend => {
+				preparedSend = preparedSend.filter(item => item !== undefined);
 				if (preparedSend.length > 1) {
 					console.log('Sending message...');
 					msg.channel.sendMessage(preparedSend);
@@ -66,7 +67,7 @@ const commands = {
 	},
 	restart: (msg) => {
 		if (msg.author.id !== config.admin_snowflake) return msg.channel.sendMessage("Sorry, Dave. I can't let you do that.");
-		return msg.channel.sendMessage('**Bot restarting!**')
+		msg.channel.sendMessage('**Bot restarting!**')
 			.then(() => {
 				process.exit(1);
 			});
