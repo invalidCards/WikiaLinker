@@ -8,6 +8,7 @@ var somethingToSend = false;
 var preparedSend = "";
 
 bot.on("message", function(msg) {
+	if (msg.author.bot) { return; }
     if (msg.cleanContent.search(/\[\[([^\]\|]+)(?:|[^\]]+)?\]\]/g) !== -1) {
 		channel = msg.channel;
         cleaned = msg.cleanContent.replace(/\u200B/g, "");
