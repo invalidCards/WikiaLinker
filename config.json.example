@@ -1,4 +1,5 @@
 {
   "token": "",
-  "admin_snowflake": ""
+  "admin_snowflake": "",
+  "prefix": "%"
 }

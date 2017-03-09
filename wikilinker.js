@@ -1,129 +1,98 @@
-var Discord = require("discord.js");
-var request = require("request");
-var config = require("./config.json");
+const Discord = require('discord.js');
+const request = require('request');
+const config = require('./config.json');
 
-var bot = new Discord.Client();
+const bot = new Discord.Client();
 
-var somethingToSend = false;
-var preparedSend = "";
+bot.on('message', (msg) => {
+	if (msg.author.bot) return;
 
-bot.on("message", function(msg) {
-	if (msg.author.bot) { return; }
-    if (msg.cleanContent.search(/\[\[([^\]\|]+)(?:|[^\]]+)?\]\]/g) !== -1) {
-		channel = msg.channel;
-        cleaned = msg.cleanContent.replace(/\u200B/g, "");
-        name = cleaned.replace(/.*?\[\[([^\]\|]+)(?:|[^\]]+)?\]\]/g, "$1\u200B");
-        allLinks = name.split("\u200B");
+	if (msg.content.startsWith(config.prefix)) {
+		const command = msg.content.slice(config.prefix.length).split(' ').shift();
+		if (commands.hasOwnProperty(command)) commands[command](msg);
+	} else {
+		const mps = ['**Wiki links detected:**'];
+		const cleaned = msg.cleanContent.replace(/\u200B/g, '');
 
-        allLinks.pop();
-        unique = allLinks.filter(onlyUnique);
+		if (/\[\[([^\]|]+)(?:|[^\]]+)?\]\]/g.test(cleaned)) {
+			const name = cleaned.replace(/.*?\[\[([^\]|]+)(?:|[^\]]+)?\]\]/g, '$1\u200B');
+			const allLinks = name.split('\u200B').slice(0, -1);
+			const unique = new Set(allLinks);
 
-        for (item in unique) {
-            if (unique.hasOwnProperty(item)) {
-                unique[item] = unique[item].trim();
-
-                reqAPI(unique[item], function () {
-                    prepareSend(this);
-                })
-            }
-        }
-    }
-	if (msg.cleanContent.search(/\{\{([^\}\|]+)(?:|[^\}]+)?\}\}/g) !== -1) {
-		channel = msg.channel;
-        cleaned = msg.cleanContent.replace(/\u200B/g, "");
-		name = cleaned.replace(/.*?\{\{([^\}\|]+)(?:|[^\}]+)?\}\}/g, "$1\u200B");
-        allLinks = name.split("\u200B");
-
-        allLinks.pop();
-        unique = allLinks.filter(onlyUnique);
-
-        for (item in unique) {
-            if (unique.hasOwnProperty(item)) {
-                unique[item] = "Template:"+unique[item].trim();
-
-                reqAPI(unique[item], function () {
-                    prepareSend(this);
-                })
-            }
-        }
-    }
-	if (msg.cleanContent.search(/\-\-([^\-\|]+)(?:|[^\-]+)?\-\-/g) !== -1) {
-		channel = msg.channel;
-        cleaned = msg.cleanContent.replace(/\u200B/g, "");
-		name = cleaned.replace(/.*?\-\-([^\-\|]+)(?:|[^\-]+)?\-\-/g, "$1\u200B");
-        allLinks = name.split("\u200B");
-
-        allLinks.pop();
-        unique = allLinks.filter(onlyUnique);
-
-        for (item in unique) {
-            if (unique.hasOwnProperty(item)) {
-                unique[item] = unique[item].trim();
-				unique[item] = unique[item].replace(/\s/g, "_");
-				prepareSend("http://runescape.wikia.com/wiki/" + unique[item]);
-			}
+			unique.forEach((item) => {
+				mps.push(reqAPI(item.trim()).catch(console.error));
+			});
 		}
-	}
-	if (msg.content.startsWith("%help")) {
-		msg.channel.sendMessage("Syntax and commands: <https://github.com/ThePsionic/RSWikiLinker#syntax>");
-	}
-    if (msg.content.startsWith("%restart")) {
-        if (msg.author.id === config.admin_snowflake) {
-            msg.channel.sendMessage("**Bot restarting!**");
-            setTimeout(function() {process.exit(1);}, 100);
-        } else {
-            msg.channel.sendMessage("Sorry, Dave. I can't let you do that.");
-        }
-    }
-	
-	setTimeout(function() {
-		if (preparedSend !== "") {
-			send(msg);
+
+		if (/\{\{([^}|]+)(?:|[^}]+)?\}\}/g.test(cleaned)) {
+			const name = cleaned.replace(/.*?\{\{([^}|]+)(?:|[^}]+)?\}\}/g, '$1\u200B');
+			const allLinks = name.split('\u200B').slice(0, -1);
+			const unique = new Set(allLinks);
+
+			unique.forEach((item) => {
+				mps.push(reqAPI(`Template:${item.trim()}`).catch(console.error));
+			});
 		}
-	}, 1000);
+
+		if (/--([^\-|]+)(?:|[^-]+)?--/g.test(cleaned)) {
+			const name = cleaned.replace(/.*?--([^\-|]+)(?:|[^-]+)?--/g, '$1\u200B');
+			const allLinks = name.split('\u200B').slice(0, -1);
+			const unique = new Set(allLinks);
+
+			unique.forEach((item) => {
+				mps.push(`<http://runescape.wikia.com/wiki/${item.trim().replace(/\s/g, '_')}>`);
+			});
+		}
+
+		Promise.all(mps)
+			.then(preparedSend => {
+				if (preparedSend.length > 1) {
+					console.log('Sending message...');
+					msg.channel.sendMessage(preparedSend);
+				}
+			})
+			.catch(console.error);
+	}
 });
 
-bot.on("disconnected", function() {
-    bot.login(config.token);
-});
+// D.js auto-reconnects, this may cause the bot to login with 2 instances
+/* bot.on('disconnected', () => {
+	bot.login(config.token);
+}); */
 
-function reqAPI(requestname, callback) {
-    request({
-        method: "GET",
-        uri: "http://runescape.wikia.com/api/v1/Search/List/?query="+requestname+"&limit=1&namespaces=0%2C14",
-        json: true
-    }, function(error, response, body) {
-        if (!error && response.statusCode == 200) {
-            console.log("First item: " + body.items[0].title);
-            callback.call(body.items[0].url);
-        } else if (error) {
-            console.log("Error: " + error);
-        } else {
-            console.log("Response code: " + response.statusCode);
-        }
-    });
-}
-
-function onlyUnique(value, index, self) {
-    return self.indexOf(value) === index;
-}
-
-function prepareSend(toAdd) {
-	if (preparedSend === "") {
-		preparedSend = "**Wiki links detected:**";
+const commands = {
+	help: (msg) => {
+		msg.channel.sendMessage('Syntax and commands: <https://github.com/ThePsionic/RSWikiLinker#syntax>');
+	},
+	restart: (msg) => {
+		if (msg.author.id !== config.admin_snowflake) return msg.channel.sendMessage("Sorry, Dave. I can't let you do that.");
+		return msg.channel.sendMessage('**Bot restarting!**')
+			.then(() => {
+				process.exit(1);
+			});
 	}
-	preparedSend += "\n<" + toAdd + ">";
-}
+};
 
-function send(msg) {
-	console.log("Sending message...");
-	msg.channel.sendMessage(preparedSend);
-	preparedSend = "";
-}
+const reqAPI = requestname => new Promise((resolve, reject) => {
+	request({
+		method: 'GET',
+		uri: `http://runescape.wikia.com/api/v1/Search/List/?query=${requestname}&limit=1&namespaces=0%2C14`,
+		json: true
+	}, (error, response, body) => {
+		if (!error && response.statusCode === 200) {
+			console.log(`First item: ${body.items[0].title}`);
+			return resolve(`<${body.items[0].url}>`);
+		} else if (error) {
+			return reject(`Error: ${error}`);
+		} else {
+			return reject(`Response code: ${response.statusCode}`);
+		}
+	});
+});
 
 if (config.admin_snowflake === '') {
-    console.log("Admin snowflake empty. Startup disallowed.");
-    process.exit(1);
+	console.log('Admin snowflake empty. Startup disallowed.');
+	process.exit(1);
 } else {
-    bot.login(config.token);
+	bot.login(config.token);
 }
