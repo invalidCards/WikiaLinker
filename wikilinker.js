@@ -25,6 +25,14 @@ bot.once('ready', () => {
 	}).catch(console.error);
 });
 
+bot.on('guildCreate', guild => {
+	if (!db.hasOwnProperty(guild.id)) db[guild.id] = {};
+	guild.settings = db[guild.id];
+	saveDB().then(() => {
+		console.log(`New Guild: ${guild.name}`);
+	}).catch(console.error);
+});
+
 bot.on('message', (msg) => {
 	if (msg.author.bot || !msg.guild || !trulyReady) return;
 
