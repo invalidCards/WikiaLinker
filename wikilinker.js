@@ -48,6 +48,10 @@ bot.on('message', (msg) => {
 				'Users with the "Administrator" permission can do this using %setWiki <wikiname>.'
 			]);
 		}
+
+		let wiki = msg.guild.settings.wiki;
+		if (msg.guild.settings.channelOverides) wiki = msg.guild.settings.channelOverides[msg.channel.id] || msg.guild.settings.wiki;
+
 		const mps = ['**Wiki links detected:**'];
 		const removeCodeblocks = msg.cleanContent.replace(/`{3}[\S\s]*?`{3}/gm, '');
 		const removeInlineCode = removeCodeblocks.replace(/`[\S\s]*?`/gm, '');
@@ -59,7 +63,7 @@ bot.on('message', (msg) => {
 			const unique = new Set(allLinks);
 
 			unique.forEach((item) => {
-				mps.push(reqAPI(msg.guild.settings.wiki, item.trim()).catch(console.error));
+				mps.push(reqAPI(wiki, item.trim()).catch(console.error));
 			});
 		}
 
@@ -69,7 +73,7 @@ bot.on('message', (msg) => {
 			const unique = new Set(allLinks);
 
 			unique.forEach((item) => {
-				mps.push(reqAPI(msg.guild.settings.wiki, `Template:${item.trim()}`).catch(console.error));
+				mps.push(reqAPI(wiki, `Template:${item.trim()}`).catch(console.error));
 			});
 		}
 
@@ -79,7 +83,7 @@ bot.on('message', (msg) => {
 			const unique = new Set(allLinks);
 
 			unique.forEach((item) => {
-				mps.push(`<http://${msg.guild.settings.wiki}.wikia.com/wiki/${item.trim().replace(/\s/g, '_')}>`);
+				mps.push(`<http://${wiki}.wikia.com/wiki/${item.trim().replace(/\s/g, '_')}>`);
 			});
 		}
 
@@ -118,6 +122,18 @@ const commands = {
 		db[msg.guild.id].wiki = wiki;
 		return saveDB().then(() => {
 			msg.reply(`Wiki is now set to: ${wiki}.`);
+		}).catch(console.error);
+	},
+	cOveride: (msg, [wiki]) => {
+		if (msg.author.id !== config.admin_snowflake || !msg.member.hasPermission('ADMINISTRATOR')) {
+			return msg.reply('You are not allowed to change the default wiki of this server.');
+		} else if (msg.channel.id === msg.guild.id) {
+			return msg.reply('You can\'t overide the default channel of a server.');
+		}
+		if (!db[msg.guild.id].channelOverides) db[msg.guild.id].channelOverides = {};
+		db[msg.guild.id].channelOverides[msg.channel.id] = wiki;
+		return saveDB().then(() => {
+			msg.reply(`Wiki in this channel is now set to: ${wiki}.`);
 		}).catch(console.error);
 	}
 };
