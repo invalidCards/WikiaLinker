@@ -12,7 +12,9 @@ bot.on('message', (msg) => {
 		if (commands.hasOwnProperty(command)) commands[command](msg);
 	} else {
 		const mps = ['**Wiki links detected:**'];
-		const cleaned = msg.cleanContent.replace(/\u200B/g, '');
+		const removeCodeblocks = msg.cleanContent.replace(/`{3}[\S\s]*?`{3}/gm, '');
+		const removeInlineCode = removeCodeblocks.replace(/`[\S\s]*?`/gm, '');
+		const cleaned = removeInlineCode.replace(/\u200B/g, '');
 
 		if (/\[\[([^\]|]+)(?:|[^\]]+)?\]\]/g.test(cleaned)) {
 			const name = cleaned.replace(/.*?\[\[([^\]|]+)(?:|[^\]]+)?\]\]/g, '$1\u200B');
