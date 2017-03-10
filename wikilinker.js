@@ -50,7 +50,7 @@ bot.on('message', (msg) => {
 		}
 
 		let wiki = msg.guild.settings.wiki;
-		if (msg.guild.settings.channelOverides) wiki = msg.guild.settings.channelOverides[msg.channel.id] || msg.guild.settings.wiki;
+		if (msg.guild.settings.channelOverrides) wiki = msg.guild.settings.channelOverrides[msg.channel.id] || msg.guild.settings.wiki;
 
 		const mps = ['**Wiki links detected:**'];
 		const removeCodeblocks = msg.cleanContent.replace(/`{3}[\S\s]*?`{3}/gm, '');
@@ -124,14 +124,14 @@ const commands = {
 			msg.reply(`Wiki is now set to: ${wiki}.`);
 		}).catch(console.error);
 	},
-	cOveride: (msg, [wiki]) => {
+	cOverride: (msg, [wiki]) => {
 		if (msg.author.id !== config.admin_snowflake || !msg.member.hasPermission('ADMINISTRATOR')) {
-			return msg.reply('You are not allowed to change the default wiki of this server.');
+			return msg.reply('You are not allowed to override the wiki of this channel.');
 		} else if (msg.channel.id === msg.guild.id) {
-			return msg.reply('You can\'t overide the default channel of a server.');
+			return msg.reply('You can\'t override the default channel of a server.');
 		}
-		if (!db[msg.guild.id].channelOverides) db[msg.guild.id].channelOverides = {};
-		db[msg.guild.id].channelOverides[msg.channel.id] = wiki;
+		if (!db[msg.guild.id].channelOverrides) db[msg.guild.id].channelOverrides = {};
+		db[msg.guild.id].channelOverrides[msg.channel.id] = wiki;
 		return saveDB().then(() => {
 			msg.reply(`Wiki in this channel is now set to: ${wiki}.`);
 		}).catch(console.error);
