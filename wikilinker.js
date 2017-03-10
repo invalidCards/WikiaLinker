@@ -14,7 +14,7 @@ try {
 	db = {};
 }
 
-bot.on('ready', () => {
+bot.once('ready', () => {
 	bot.guilds.forEach(guild => {
 		if (!db.hasOwnProperty(guild.id)) db[guild.id] = {};
 		guild.settings = db[guild.id];
