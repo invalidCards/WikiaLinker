@@ -1,20 +1,57 @@
 const Discord = require('discord.js');
-const request = require('request');
-const jsonfile = require('jsonfile');
-const fs = require('fs');
-const config = require('./config.json');
-
 const bot = new Discord.Client();
-
+const request = require('request');
+const fs = require('fs-extra-promise');
+const config = require('./config.json');
 const dbfile = './db.json';
 
+let trulyReady = false;
+let db;
+
+try {
+	db = require(dbfile);
+} catch (err) {
+	db = {};
+}
+
+bot.once('ready', () => {
+	bot.guilds.forEach(guild => {
+		if (!db.hasOwnProperty(guild.id)) db[guild.id] = {};
+		guild.settings = db[guild.id];
+	});
+	saveDB().then(() => {
+		trulyReady = true;
+		console.log(`Ready: serving ${bot.guilds.size} guilds, in ${bot.channels.size} channels, for ${bot.users.size} users.`);
+	}).catch(console.error);
+});
+
+bot.on('guildCreate', guild => {
+	if (!db.hasOwnProperty(guild.id)) db[guild.id] = {};
+	guild.settings = db[guild.id];
+	saveDB().then(() => {
+		console.log(`New Guild: ${guild.name}`);
+	}).catch(console.error);
+});
+
 bot.on('message', (msg) => {
-	if (msg.author.bot) return;
+	if (msg.author.bot || !msg.guild || !trulyReady) return;
 
 	if (msg.content.startsWith(config.prefix)) {
-		const command = msg.content.slice(config.prefix.length).split(' ').shift();
-		if (commands.hasOwnProperty(command)) commands[command](msg);
-	} else {
+		const args = msg.content.slice(config.prefix.length).split(' ');
+		const command = args.shift();
+		if (commands.hasOwnProperty(command)) commands[command](msg, args);
+	} else if (/\[\[([^\]|]+)(?:|[^\]]+)?\]\]/g.test(msg.cleanContent) || /\{\{([^}|]+)(?:|[^}]+)?\}\}/g.test(msg.cleanContent) || /--([^\-|]+)(?:|[^-]+)?--/g.test(msg.cleanContent)) {
+		if (!msg.guild.settings.wiki) {
+			// eslint-disable-next-line consistant-return
+			return msg.channel.sendMessage([
+				'This server has not set a default wiki yet.',
+				'Users with the "Administrator" permission can do this using %setWiki <wikiname>.'
+			]);
+		}
+
+		let wiki = msg.guild.settings.wiki;
+		if (msg.guild.settings.channelOverrides) wiki = msg.guild.settings.channelOverrides[msg.channel.id] || msg.guild.settings.wiki;
+
 		const mps = ['**Wiki links detected:**'];
 		const removeCodeblocks = msg.cleanContent.replace(/`{3}[\S\s]*?`{3}/gm, '');
 		const removeInlineCode = removeCodeblocks.replace(/`[\S\s]*?`/gm, '');
@@ -26,8 +63,7 @@ bot.on('message', (msg) => {
 			const unique = new Set(allLinks);
 
 			unique.forEach((item) => {
-				var toPush = dbCheck(msg, item.trim(), false);
-				if (toPush !== null) mps.push(toPush);
+				mps.push(reqAPI(wiki, item.trim()).catch(console.error));
 			});
 		}
 
@@ -37,8 +73,7 @@ bot.on('message', (msg) => {
 			const unique = new Set(allLinks);
 
 			unique.forEach((item) => {
-				var toPush = dbCheck(msg, `Template:${item.trim()}`, false);
-				if (toPush !== null) mps.push(toPush);
+				mps.push(reqAPI(wiki, `Template:${item.trim()}`).catch(console.error));
 			});
 		}
 
@@ -48,8 +83,7 @@ bot.on('message', (msg) => {
 			const unique = new Set(allLinks);
 
 			unique.forEach((item) => {
-				var toPush = dbCheck(msg, item.trim().replace(/\s/g, '_'), true);
-				if (toPush !== null) mps.push(toPush);
+				mps.push(`<http://${wiki}.wikia.com/wiki/${item.trim().replace(/\s/g, '_')}>`);
 			});
 		}
 
@@ -70,29 +104,6 @@ bot.on('message', (msg) => {
 	bot.login(config.token);
 }); */
 
-const dbCheck = (msg, requestname, raw) => {
-	jsonfile.readFile(dbfile, (err, obj) => {
-		if (err) {
-			console.error(err);
-			return null;
-		}
-		if (!msg.guild) {
-			msg.reply("please don't PM me :(");
-			return null;
-		}
-		if (obj[msg.guild.id] === null || obj[msg.guild.id] === undefined) {
-			msg.channel.sendMessage('This server has not set a default wiki yet.\nUsers with the "Administrator" permission can do this using %setWiki <wikiname>.');
-			return null;
-		}
-		const wiki = obj[msg.guild.id];
-		if (raw) {
-			return `<http://${wiki}.wikia.com/wiki/${requestname.trim().replace(/\s/g, '_')}>`;
-		} else {
-			return reqAPI(wiki, requestname);
-		}
-	});
-};
-
 const commands = {
 	help: (msg) => {
 		msg.channel.sendMessage('Syntax and commands: <https://github.com/ThePsionic/RSWikiLinker#syntax>');
@@ -104,26 +115,26 @@ const commands = {
 				process.exit(1);
 			});
 	},
-	setWiki: (msg) => {
+	setWiki: (msg, [wiki]) => {
 		if (msg.author.id !== config.admin_snowflake || !msg.member.hasPermission('ADMINISTRATOR')) {
-			return msg.reply('you are not allowed to change the default wiki of this server.');
+			return msg.reply('You are not allowed to change the default wiki of this server.');
 		}
-		if (!msg.guild) {
-			return msg.reply('you can\'t set a default wiki privately as of right now.');
+		db[msg.guild.id].wiki = wiki;
+		return saveDB().then(() => {
+			msg.reply(`Wiki is now set to: ${wiki}.`);
+		}).catch(console.error);
+	},
+	cOverride: (msg, [wiki]) => {
+		if (msg.author.id !== config.admin_snowflake || !msg.member.hasPermission('ADMINISTRATOR')) {
+			return msg.reply('You are not allowed to override the wiki of this channel.');
+		} else if (msg.channel.id === msg.guild.id) {
+			return msg.reply('You can\'t override the default channel of a server.');
 		}
-		return msg.reply(jsonfile.readFile(dbfile, (err, obj) => {
-			if (err) {
-				console.error(err);
-				return `error while setting wiki - sorry!`;
-			}
-			var wiki = msg.cleanContent.split(/\s/g)[1];
-			console.log(`wiki = ${wiki}`);
-			obj[msg.guild.id] = wiki;
-			jsonfile.writeFile(dbfile, obj, (innererr) => {
-				console.error(innererr);
-			});
-			return `you have set the default wiki of this server to ${wiki}.`;
-		}));
+		if (!db[msg.guild.id].channelOverrides) db[msg.guild.id].channelOverrides = {};
+		db[msg.guild.id].channelOverrides[msg.channel.id] = wiki;
+		return saveDB().then(() => {
+			msg.reply(`Wiki in this channel is now set to: ${wiki}.`);
+		}).catch(console.error);
 	}
 };
 
@@ -144,18 +155,11 @@ const reqAPI = (wiki, requestname) => new Promise((resolve, reject) => {
 	});
 });
 
+const saveDB = () => fs.writeFileAsync(dbfile, JSON.stringify(db, null, 2));
+
 if (config.admin_snowflake === '') {
 	console.log('Admin snowflake empty. Startup disallowed.');
 	process.exit(1);
 } else {
-	fs.stat(dbfile, (err) => {
-		if (err === null) {
-			console.log('File exists');
-		} else if (err.code === 'ENOENT') {
-			fs.writeFile(dbfile, '{}');
-		} else {
-			console.error('Bad file error: ', err.code);
-		}
-	});
 	bot.login(config.token);
 }

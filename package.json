@@ -4,6 +4,6 @@
   "dependencies": {
     "discord.js": "^11.0.0",
     "request": "2.72.0",
-    "jsonfile": "2.4.0"
+    "fs-extra-promise": "^0.4.1"
   }
 }
