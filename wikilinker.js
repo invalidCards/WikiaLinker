@@ -23,6 +23,7 @@ bot.once('ready', () => {
 		});
 	});
 	trulyReady = true;
+	bot.client.setUsername('WikiaLinker');
 	console.log(`Ready: serving ${bot.guilds.size} guilds, in ${bot.channels.size} channels, for ${bot.users.size} users.`);
 });
 
@@ -168,7 +169,7 @@ const commands = {
 					msg.reply(`Wiki is now set to: ${wiki}`)
 				).catch(() => msg.reply('Database error - please contact the developer!'));
 			} else {
-				sql.run(`UPDATE guilds SET mainWiki="${wiki}" WHERE id="${msg.guild.id}"`).then(() =>
+				sql.run(`UPDATE guilds SET mainWiki="?" WHERE id="${msg.guild.id}"`, [wiki]).then(() =>
 					msg.reply(`Wiki is now set to: ${wiki}`));
 			}
 		});
@@ -183,7 +184,7 @@ const commands = {
 		wiki = wiki.split(' ')[0];
 		sql.get(`SELECT * FROM overrides WHERE guildID="${msg.guild.id}" AND channelID="${msg.channel.id}"`).then(row => {
 			if (row) {
-				sql.run(`UPDATE overrides SET wiki="${wiki}" WHERE guildID="${msg.guild.id}" AND channelID="${msg.channel.id}"`);
+				sql.run(`UPDATE overrides SET wiki="?" WHERE guildID="${msg.guild.id}" AND channelID="${msg.channel.id}"`, [wiki]);
 			} else {
 				sql.run(`INSERT INTO overrides (guildID, channelID, wiki) VALUES (?,?,?)`, [msg.guild.id, msg.channel.id, wiki]);
 			}
@@ -201,7 +202,7 @@ const commands = {
 			}); */
 			sql.get(`SELECT * FROM guilds WHERE id="${msg.guild.id}"`).then(row => {
 				if (row) {
-					sql.run(`UPDATE guilds SET broadcastChannel="${channel.id}" WHERE id="${msg.guild.id}"`).then(() =>
+					sql.run(`UPDATE guilds SET broadcastChannel="?" WHERE id="${msg.guild.id}"`, [channel.id]).then(() =>
 						msg.reply(`The broadcast channel for this server is now set to: ${channel.name}.`)
 					);
 				} else {
