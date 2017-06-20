@@ -23,7 +23,6 @@ bot.once('ready', () => {
 		});
 	});
 	trulyReady = true;
-	bot.client.setUsername('WikiaLinker');
 	console.log(`Ready: serving ${bot.guilds.size} guilds, in ${bot.channels.size} channels, for ${bot.users.size} users.`);
 });
 
@@ -56,69 +55,69 @@ bot.on('message', (msg) => {
 				]);
 			} else if (!row.broadcastChannel) {
 				return msg.channel.send([
-					'This server has not set a default wiki yet.',
-					'Users with the "Administrator" permission can do this using wl~swiki <wikiname>.'
+					'This server has not set a broadcast channel yet.',
+					'Users with the "Administrator" permission can do this using wl~bchan <channel mention>.'
 				]);
 			}
-		});
 
-		sql.get(`SELECT mainWiki FROM guilds WHERE id="${msg.guild.id}"`).then(row => {
-			let wiki = row.mainWiki;
+			sql.get(`SELECT mainWiki FROM guilds WHERE id="${msg.guild.id}"`).then(lowrow => {
+				let wiki = lowrow.mainWiki;
 
-			sql.all(`SELECT * FROM overrides WHERE guildID="${msg.guild.id}"`).then(rows => {
-				if (rows.length !== 0) {
-					for (let i = 0; i < rows.length; i++) {
-						if (rows[i].channelID === msg.channel.id) {
-							wiki = rows[i].wiki;
+				sql.all(`SELECT * FROM overrides WHERE guildID="${msg.guild.id}"`).then(rows => {
+					if (rows.length !== 0) {
+						for (let i = 0; i < rows.length; i++) {
+							if (rows[i].channelID === msg.channel.id) {
+								wiki = rows[i].wiki;
+							}
 						}
 					}
-				}
-				const mps = ['**Wiki links detected:**'];
-				const removeCodeblocks = msg.cleanContent.replace(/`{3}[\S\s]*?`{3}/gm, '');
-				const removeInlineCode = removeCodeblocks.replace(/`[\S\s]*?`/gm, '');
-				const cleaned = removeInlineCode.replace(/\u200B/g, '');
+					const mps = ['**Wiki links detected:**'];
+					const removeCodeblocks = msg.cleanContent.replace(/`{3}[\S\s]*?`{3}/gm, '');
+					const removeInlineCode = removeCodeblocks.replace(/`[\S\s]*?`/gm, '');
+					const cleaned = removeInlineCode.replace(/\u200B/g, '');
 
-				if (/\[\[([^\]|]+)(?:|[^\]]+)?\]\]/g.test(cleaned)) {
-					const name = cleaned.replace(/.*?\[\[([^\]|]+)(?:|[^\]]+)?\]\]/g, '$1\u200B');
-					const allLinks = name.split('\u200B').slice(0, -1);
-					const unique = new Set(allLinks);
+					if (/\[\[([^\]|]+)(?:|[^\]]+)?\]\]/g.test(cleaned)) {
+						const name = cleaned.replace(/.*?\[\[([^\]|]+)(?:|[^\]]+)?\]\]/g, '$1\u200B');
+						const allLinks = name.split('\u200B').slice(0, -1);
+						const unique = new Set(allLinks);
 
-					unique.forEach((item) => {
-						mps.push(reqAPI(wiki, item.trim()).catch(console.error));
-					});
-				}
+						unique.forEach((item) => {
+							mps.push(reqAPI(wiki, item.trim()).catch(console.error));
+						});
+					}
 
-				if (/\{\{([^}|]+)(?:|[^}]+)?\}\}/g.test(cleaned)) {
-					const name = cleaned.replace(/.*?\{\{([^}|]+)(?:|[^}]+)?\}\}/g, '$1\u200B');
-					const allLinks = name.split('\u200B').slice(0, -1);
-					const unique = new Set(allLinks);
+					if (/\{\{([^}|]+)(?:|[^}]+)?\}\}/g.test(cleaned)) {
+						const name = cleaned.replace(/.*?\{\{([^}|]+)(?:|[^}]+)?\}\}/g, '$1\u200B');
+						const allLinks = name.split('\u200B').slice(0, -1);
+						const unique = new Set(allLinks);
 
-					unique.forEach((item) => {
-						mps.push(reqAPI(wiki, `Template:${item.trim()}`).catch(console.error));
-					});
-				}
+						unique.forEach((item) => {
+							mps.push(reqAPI(wiki, `Template:${item.trim()}`).catch(console.error));
+						});
+					}
 
-				if (/--([^\-|]+)(?:|[^-]+)?--/g.test(cleaned)) {
-					const name = cleaned.replace(/.*?--([^\-|]+)(?:|[^-]+)?--/g, '$1\u200B');
-					const allLinks = name.split('\u200B').slice(0, -1);
-					const unique = new Set(allLinks);
+					if (/--([^\-|]+)(?:|[^-]+)?--/g.test(cleaned)) {
+						const name = cleaned.replace(/.*?--([^\-|]+)(?:|[^-]+)?--/g, '$1\u200B');
+						const allLinks = name.split('\u200B').slice(0, -1);
+						const unique = new Set(allLinks);
 
-					unique.forEach((item) => {
-						mps.push(`<http://${wiki}.wikia.com/wiki/${item.trim().replace(/\s/g, '_')}>`);
-					});
-				}
+						unique.forEach((item) => {
+							mps.push(`<http://${wiki}.wikia.com/wiki/${item.trim().replace(/\s/g, '_')}>`);
+						});
+					}
 
-				Promise.all(mps)
-			.then(preparedSend => {
-				preparedSend = preparedSend.filter(item => item !== undefined);
-				if (preparedSend.length > 1) {
-					console.log('Sending message...');
-					msg.channel.send(preparedSend);
-				}
-			})
-			.catch(console.error);
-			});
-		});
+					Promise.all(mps)
+				.then(preparedSend => {
+					preparedSend = preparedSend.filter(item => item !== undefined);
+					if (preparedSend.length > 1) {
+						console.log('Sending message...');
+						msg.channel.send(preparedSend);
+					}
+				})
+				.catch(console.error);
+				}).catch(console.error);
+			}).catch(console.error);
+		}).catch(console.error);
 	}
 });
 
@@ -143,24 +142,19 @@ const commands = {
 			msg.reply("you don't get to yell at everyone!");
 			return;
 		}
-		/* var joinedGuilds = Array.from(bot.guilds.keys());
-		for (var i = 0; i < joinedGuilds.length; i++) {
-			var guildID = joinedGuilds[i];
-			if (db[guildID].broadcastChannel) {
-				return bot.channels.get(db[guildID].broadcastChannel).send(globalMessage);
-			}
-		}*/
 
 		sql.each(`SELECT * FROM guilds`, (err, row) => {
 			if (row.broadcastChannel && !err) {
 				bot.channels.get(row.broadcastChannel).send(globalMessage);
 			}
-		});
+		}).catch(console.error);
 	},
 	swiki: (msg, [wiki]) => {
-		if (msg.author.id !== config.admin_snowflake || !msg.member.hasPermission('ADMINISTRATOR')) {
-			msg.reply('You are not allowed to change the default wiki of this server.');
-			return;
+		if (msg.author.id !== config.admin_snowflake) {
+			if (!msg.member.hasPermission('ADMINISTRATOR')) {
+				msg.reply('You are not allowed to change the default wiki of this server.');
+				return;
+			}
 		}
 		wiki = wiki.split(' ')[0];
 		sql.get(`SELECT * FROM guilds WHERE id=${msg.guild.id}`).then(row => {
@@ -169,14 +163,17 @@ const commands = {
 					msg.reply(`Wiki is now set to: ${wiki}`)
 				).catch(() => msg.reply('Database error - please contact the developer!'));
 			} else {
-				sql.run(`UPDATE guilds SET mainWiki="?" WHERE id="${msg.guild.id}"`, [wiki]).then(() =>
+				sql.run(`UPDATE guilds SET mainWiki=? WHERE id=?`, [wiki, msg.guild.id]).then(() =>
 					msg.reply(`Wiki is now set to: ${wiki}`));
 			}
-		});
+		}).catch(console.error);
 	},
 	cwiki: (msg, [wiki]) => {
-		if (msg.author.id !== config.admin_snowflake || !msg.member.hasPermission('ADMINISTRATOR')) {
-			msg.reply('You are not allowed to override the wiki of this channel.'); return;
+		if (msg.author.id !== config.admin_snowflake) {
+			if (!msg.member.hasPermission('ADMINISTRATOR')) {
+				msg.reply('You are not allowed to change the default wiki of this server.');
+				return;
+			}
 		} else if (msg.channel.id === msg.guild.id) {
 			msg.reply('You can\'t override the default channel of a server.'); return;
 		}
@@ -184,25 +181,28 @@ const commands = {
 		wiki = wiki.split(' ')[0];
 		sql.get(`SELECT * FROM overrides WHERE guildID="${msg.guild.id}" AND channelID="${msg.channel.id}"`).then(row => {
 			if (row) {
-				sql.run(`UPDATE overrides SET wiki="?" WHERE guildID="${msg.guild.id}" AND channelID="${msg.channel.id}"`, [wiki]);
+				sql.run(`UPDATE overrides SET wiki=? WHERE guildID=? AND channelID=?`, [wiki, msg.guild.id, msg.channel.id]);
 			} else {
 				sql.run(`INSERT INTO overrides (guildID, channelID, wiki) VALUES (?,?,?)`, [msg.guild.id, msg.channel.id, wiki]);
 			}
-		}).then(() => msg.reply(`The wiki override for channel ${msg.channel.name} is now set to ${wiki}`));
+		}).then(() => msg.reply(`The wiki override for channel ${msg.channel.name} is now set to ${wiki}`)).catch(console.error);
 	},
 	bchan: (msg) => {
-		if (!msg.mentions.channels || msg.mentions.channels.size > 1) {
+		if (msg.author.id !== config.admin_snowflake) {
+			if (!msg.member.hasPermission('ADMINISTRATOR')) {
+				msg.reply('You are not allowed to change the broadcast channel of this server.');
+				return;
+			}
+		} else if (!msg.mentions.channels || msg.mentions.channels.size > 1) {
 			msg.reply('You need to mention exactly one channel to be set as broadcast channel.');
 			return;
 		} else {
 			var channel = msg.mentions.channels.first();
-			/* db[msg.guild.id].broadcastChannel = channel.id;
-			return saveDB().then(() => {
-				msg.reply(`The broadcast channel for this server is now set to: ${channel.name}.`);
-			}); */
+			console.log(`Channel is ${channel.name}`);
 			sql.get(`SELECT * FROM guilds WHERE id="${msg.guild.id}"`).then(row => {
+				console.log(row);
 				if (row) {
-					sql.run(`UPDATE guilds SET broadcastChannel="?" WHERE id="${msg.guild.id}"`, [channel.id]).then(() =>
+					sql.run(`UPDATE guilds SET broadcastChannel=? WHERE id=?`, [channel.id, msg.guild.id]).then(() =>
 						msg.reply(`The broadcast channel for this server is now set to: ${channel.name}.`)
 					);
 				} else {
@@ -233,8 +233,8 @@ const commands = {
 
 				totalMessage += '\n```';
 				msg.channel.send(totalMessage);
-			});
-		});
+			}).catch(console.error);
+		}).catch(console.error);
 	}
 };
 
@@ -261,3 +261,5 @@ if (config.admin_snowflake === '') {
 } else {
 	bot.login(config.token);
 }
+
+process.on('unhandledRejection', re => console.log(re));
