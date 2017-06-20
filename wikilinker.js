@@ -53,11 +53,6 @@ bot.on('message', (msg) => {
 					'This server has not set a default wiki yet.',
 					'Users with the "Administrator" permission can do this using wl~swiki <wikiname>.'
 				]);
-			} else if (!row.broadcastChannel) {
-				return msg.channel.send([
-					'This server has not set a broadcast channel yet.',
-					'Users with the "Administrator" permission can do this using wl~bchan <channel mention>.'
-				]);
 			}
 
 			sql.get(`SELECT mainWiki FROM guilds WHERE id="${msg.guild.id}"`).then(lowrow => {
@@ -146,6 +141,8 @@ const commands = {
 		sql.each(`SELECT * FROM guilds`, (err, row) => {
 			if (row.broadcastChannel && !err) {
 				bot.channels.get(row.broadcastChannel).send(globalMessage);
+			} else {
+				bot.guilds.get(row.id).defaultChannel.send(globalMessage);
 			}
 		}).catch(console.error);
 	},
