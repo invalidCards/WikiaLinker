@@ -10,15 +10,19 @@ A configurable Discord bot for linking wiki articles from any Wikia-based commun
 
 ## Other commands
 `wl~help` - Links to this README.
+
 `wl~sinfo` - Shows info about the configuration of the bot on the server.
 
 ## Server admin commands
 `wl~swiki` - Sets the global wiki for the server.
+
 `wl~cwiki` - Sets the override wiki in the current channel.
+
 `wl~bchan #channel` - Sets the broadcast channel of the server to the mentioned channel.
 
 ## Bot admin commands
 `wl~restart` - Restarts the bot. **The bot *must* be run under a process manager such as PM2, otherwise this will just error out the bot!**
+
 `wl~bc` - Broadcasts a message across all of the servers the bot is in - to the broadcast channel is set, or the general channel otherwise.
 
 # Inviting it
