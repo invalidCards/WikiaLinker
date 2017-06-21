@@ -222,6 +222,7 @@ const commands = {
 		sql.get(`SELECT * FROM guilds WHERE id="${msg.guild.id}"`).then(row => {
 			var totalMessage = `\`\`\`\nInfo for server: ${msg.guild.name}`;
 			if (!row.broadcastChannel) totalMessage += '\nNo broadcast channel set';
+			else if (row.broadcastChannel === '-1') totalMessage += '\nBroadcasting turned off for this server';
 			else totalMessage += `\nBroadcast channel: ${msg.guild.channels.get(row.broadcastChannel).name}`;
 
 			if (!row.mainWiki) totalMessage += '\nNo main wiki set';
