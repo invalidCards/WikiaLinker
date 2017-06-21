@@ -140,8 +140,10 @@ const commands = {
 
 		sql.each(`SELECT * FROM guilds`, (err, row) => {
 			if (row.broadcastChannel && !err) {
-				bot.channels.get(row.broadcastChannel).send(globalMessage);
-			} else {
+				if (row.broadcastChannel !== '-1') {
+					bot.channels.get(row.broadcastChannel).send(globalMessage);
+				}
+			} else if (bot.guilds.get(row.id)) {
 				bot.guilds.get(row.id).defaultChannel.send(globalMessage);
 			}
 		}).catch(console.error);
@@ -185,28 +187,35 @@ const commands = {
 		}).then(() => msg.reply(`The wiki override for channel ${msg.channel.name} is now set to ${wiki}`)).catch(console.error);
 	},
 	bchan: (msg) => {
+		let channel;
 		if (msg.author.id !== config.admin_snowflake) {
 			if (!msg.member.hasPermission('ADMINISTRATOR')) {
 				msg.reply('You are not allowed to change the broadcast channel of this server.');
 				return;
 			}
-		} else if (!msg.mentions.channels || msg.mentions.channels.size > 1) {
+		} else if (msg.mentions.channels.size > 1) {
 			msg.reply('You need to mention exactly one channel to be set as broadcast channel.');
 			return;
-		} else {
-			var channel = msg.mentions.channels.first();
-			console.log(`Channel is ${channel.name}`);
-			sql.get(`SELECT * FROM guilds WHERE id="${msg.guild.id}"`).then(row => {
-				console.log(row);
-				if (row) {
-					sql.run(`UPDATE guilds SET broadcastChannel=? WHERE id=?`, [channel.id, msg.guild.id]).then(() =>
-						msg.reply(`The broadcast channel for this server is now set to: ${channel.name}.`)
-					);
-				} else {
-					msg.reply('Database error - please contact the developer!');
-				}
-			});
 		}
+
+		if (msg.cleanContent.split(' ')[1] === 'off') {
+			channel = { name: 'off', id: '-1' };
+		} else if (msg.mentions.channels.size === 0) {
+			channel = msg.channel;
+		} else {
+			channel = msg.mentions.channels.first();
+		}
+		console.log(`Channel is ${channel.name}`);
+		sql.get(`SELECT * FROM guilds WHERE id="${msg.guild.id}"`).then(row => {
+			console.log(row);
+			if (row) {
+				sql.run(`UPDATE guilds SET broadcastChannel=? WHERE id=?`, [channel.id, msg.guild.id]).then(() =>
+					msg.reply(`The broadcast channel for this server is now set to: ${channel.name}.`)
+				);
+			} else {
+				msg.reply('Database error - please contact the developer!');
+			}
+		});
 	},
 	sinfo: (msg) => {
 		if (!msg.guild) return;
