@@ -123,7 +123,7 @@ bot.on('message', (msg) => {
 
 const commands = {
 	help: (msg) => {
-		msg.channel.send('Syntax and commands: <https://github.com/ThePsionic/RSWikiLinker#syntax>');
+		msg.channel.send('Syntax and commands: <https://github.com/ThePsionic/WikiaLinker#syntax>');
 	},
 	restart: (msg) => {
 		if (msg.author.id !== config.admin_snowflake) return msg.channel.send("Sorry, Dave. I can't let you do that.");
