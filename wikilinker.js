@@ -92,7 +92,7 @@ bot.on('message', (msg) => {
 					}
 
 					if (/--([^\-|]+)(?:|[^-]+)?--/g.test(cleaned)) {
-						const name = cleaned.replace(/.*?--([^\-|]+)(?:|[^-]+)?--/g, '$1\u200B');
+						const name = cleaned.replace(/.*?--([^\-|]+)(?:|[^-]+)?--/g, '$1\u200B').replace(/.*(?:\n|\r)/g, '');
 						const allLinks = name.split('\u200B').slice(0, -1);
 						const unique = new Set(allLinks);
 
