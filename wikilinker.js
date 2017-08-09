@@ -248,7 +248,7 @@ const commands = {
 const reqAPI = (wiki, requestname) => new Promise((resolve, reject) => {
 	request({
 		method: 'GET',
-		uri: `http://${wiki}.wikia.com/api/v1/Search/List/?query=${requestname}&limit=1&namespaces=0%2C14`,
+		uri: `http://${wiki}.wikia.com/api/v1/Search/List/?query=${requestname}&limit=1`,
 		json: true
 	}, (error, response, body) => {
 		if (!error && response.statusCode === 200) {
