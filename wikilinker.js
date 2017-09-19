@@ -45,7 +45,7 @@ bot.on('message', (msg) => {
 		const args = msg.content.slice(config.prefix.length).split(/ (.+)/);
 		const command = args.shift();
 		if (commands.hasOwnProperty(command)) commands[command](msg, args);
-	} else if (/\[\[([^\]|]+)(?:|[^\]]+)?\]\]/g.test(msg.cleanContent) || /\{\{([^}|]+)(?:|[^}]+)?\}\}/g.test(msg.cleanContent) || /--([^\-|]+)(?:|[^-]+)?--/g.test(msg.cleanContent)) {
+	} else if (/\[\[([^\]|]+)(?:|[^\]]+)?\]\]/g.test(msg.cleanContent) || /\{\{([^}|]+)(?:|[^}]+)?\}\}/g.test(msg.cleanContent) || /--([^|]+?)--/g.test(msg.cleanContent)) {
 		// eslint-disable-next-line consistent-return
 		sql.get(`SELECT * FROM guilds WHERE id="${msg.guild.id}"`).then(row => {
 			if (!row.mainWiki) {
@@ -91,8 +91,8 @@ bot.on('message', (msg) => {
 						});
 					}
 
-					if (/--([^\-|]+)(?:|[^-]+)?--/g.test(cleaned)) {
-						const name = cleaned.replace(/.*?--([^\-|]+)(?:|[^-]+)?--/g, '$1\u200B').replace(/.*(?:\n|\r)/g, '');
+					if (/--([^|]+?)--/g.test(cleaned)) {
+						const name = cleaned.replace(/.*?--([^|]+?)--/g, '$1\u200B').replace(/.*(?:\n|\r)/g, '');
 						const allLinks = name.split('\u200B').slice(0, -1);
 						const unique = new Set(allLinks);
 
@@ -102,14 +102,14 @@ bot.on('message', (msg) => {
 					}
 
 					Promise.all(mps)
-				.then(preparedSend => {
-					preparedSend = preparedSend.filter(item => item !== undefined);
-					if (preparedSend.length > 1) {
-						console.log('Sending message...');
-						msg.channel.send(preparedSend);
-					}
-				})
-				.catch(console.error);
+						.then(preparedSend => {
+							preparedSend = preparedSend.filter(item => item !== undefined);
+							if (preparedSend.length > 1) {
+								console.log('Sending message...');
+								msg.channel.send(preparedSend);
+							}
+						})
+						.catch(console.error);
 				}).catch(console.error);
 			}).catch(console.error);
 		}).catch(console.error);
@@ -138,13 +138,15 @@ const commands = {
 			return;
 		}
 
-		sql.each(`SELECT * FROM guilds`, (err, row) => {
+		sql.each('SELECT * FROM guilds', (err, row) => {
 			if (row.broadcastChannel && !err) {
 				if (row.broadcastChannel !== '-1') {
 					bot.channels.get(row.broadcastChannel).send(globalMessage);
 				}
-			} else if (bot.guilds.get(row.id)) {
-				bot.guilds.get(row.id).defaultChannel.send(globalMessage);
+			} else if (bot.guilds.has(row.id)) {
+				defaultChannel(bot.guilds.get(row.id)).then(channel => {
+					channel.send(globalMessage);
+				});
 			}
 		}).catch(console.error);
 	},
@@ -162,7 +164,7 @@ const commands = {
 					msg.reply(`Wiki is now set to: ${wiki}`)
 				).catch(() => msg.reply('Database error - please contact the developer!'));
 			} else {
-				sql.run(`UPDATE guilds SET mainWiki=? WHERE id=?`, [wiki, msg.guild.id]).then(() =>
+				sql.run('UPDATE guilds SET mainWiki=? WHERE id=?', [wiki, msg.guild.id]).then(() =>
 					msg.reply(`Wiki is now set to: ${wiki}`));
 			}
 		}).catch(console.error);
@@ -180,9 +182,9 @@ const commands = {
 		wiki = wiki.split(' ')[0];
 		sql.get(`SELECT * FROM overrides WHERE guildID="${msg.guild.id}" AND channelID="${msg.channel.id}"`).then(row => {
 			if (row) {
-				sql.run(`UPDATE overrides SET wiki=? WHERE guildID=? AND channelID=?`, [wiki, msg.guild.id, msg.channel.id]);
+				sql.run('UPDATE overrides SET wiki=? WHERE guildID=? AND channelID=?', [wiki, msg.guild.id, msg.channel.id]);
 			} else {
-				sql.run(`INSERT INTO overrides (guildID, channelID, wiki) VALUES (?,?,?)`, [msg.guild.id, msg.channel.id, wiki]);
+				sql.run('INSERT INTO overrides (guildID, channelID, wiki) VALUES (?,?,?)', [msg.guild.id, msg.channel.id, wiki]);
 			}
 		}).then(() => msg.reply(`The wiki override for channel ${msg.channel.name} is now set to ${wiki}`)).catch(console.error);
 	},
@@ -209,7 +211,7 @@ const commands = {
 		sql.get(`SELECT * FROM guilds WHERE id="${msg.guild.id}"`).then(row => {
 			console.log(row);
 			if (row) {
-				sql.run(`UPDATE guilds SET broadcastChannel=? WHERE id=?`, [channel.id, msg.guild.id]).then(() =>
+				sql.run('UPDATE guilds SET broadcastChannel=? WHERE id=?', [channel.id, msg.guild.id]).then(() =>
 					msg.reply(`The broadcast channel for this server is now set to: ${channel.name}.`)
 				);
 			} else {
@@ -260,6 +262,20 @@ const reqAPI = (wiki, requestname) => new Promise((resolve, reject) => {
 			return reject(`Response code: ${response.statusCode}`);
 		}
 	});
+});
+
+const defaultChannel = (guild) => new Promise((resolve, reject) => {
+	guild.channels.forEach((value, key, map) => {
+		if (value.name === 'general') {
+			return resolve(value);
+		}
+	});
+	let alt = guild.channels.filter((channel) => channel.type === 'text' && channel.permissionsFor(bot.user).has('SEND_MESSAGES')).first();
+	if (alt) {
+		return resolve(alt);
+	} else {
+		return reject('No applicable channel found.');
+	}
 });
 
 if (config.admin_snowflake === '') {

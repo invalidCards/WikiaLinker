@@ -1,0 +1,50 @@
+---
+  parserOptions:
+    ecmaVersion: 6
+  env:
+    browser: true
+    jquery: true
+  extends: eslint:recommended
+  rules:
+    dot-notation: [error, allowPattern: "^[A-Z]"]
+    id-length: [error, exceptions: [i, j, e, x, y]]
+    no-caller: error
+    no-console: off
+    no-empty: off
+    no-implied-eval: error
+    no-mixed-spaces-and-tabs: [error, smart-tabs]
+    no-unused-vars:
+     - error
+     - vars: local
+       args: none
+    no-shadow: error
+    no-unsafe-negation: error
+    no-with: error
+    valid-jsdoc:
+      - error
+      - requireReturn: false
+        requireParamDescription: false
+        requireReturnDescription: false
+
+    indent: [error, tab]
+    quotes: [error, single, avoidEscape: true]
+    semi: error
+    brace-style: [error, 1tbs, allowSingleLine: true]
+    linebreak-style: [error, unix]
+    semi-spacing: error
+    comma-spacing: error
+    space-infix-ops: error
+    template-curly-spacing: error
+    space-before-function-paren: [error, never]
+    space-before-blocks: error
+    keyword-spacing:
+      - error
+      - before: true
+        after: true
+  globals:
+    require: true
+    Long: true
+    exports: true
+    Set: true
+    Promise: true
+    process: true
