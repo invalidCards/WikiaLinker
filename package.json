@@ -3,7 +3,6 @@
   "version": "1.1.0",
   "dependencies": {
     "discord.js": "^11.2.1",
-    "install": "^0.10.1",
     "request": "^2.72.0",
     "sqlite": "^2.8.0"
   }
