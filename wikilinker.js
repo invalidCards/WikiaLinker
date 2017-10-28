@@ -129,7 +129,7 @@ const sentByAdmin = (msg) => {
 
 const commands = {
 	help: (msg) => {
-		msg.channel.send('Syntax and commands: <https://github.com/ThePsionic/WikiaLinker#syntax>');
+		msg.channel.send('Syntax and commands: <http://thepsionic.com/WikiaLinker/>');
 	},
 	restart: (msg) => {
 		if (!sentByAdmin(msg)) {
