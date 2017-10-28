@@ -44,7 +44,9 @@ bot.on('message', (msg) => {
 	if (msg.content.startsWith(config.prefix)) {
 		const args = msg.content.slice(config.prefix.length).split(/ (.+)/);
 		const command = args.shift();
-		if (commands.hasOwnProperty(command)) commands[command](msg, args);
+		if (commands.hasOwnProperty(command)) {
+		    commands[command](msg, args);
+        }
 	} else if (/\[\[([^\]|]+)(?:|[^\]]+)?\]\]/g.test(msg.cleanContent) || /\{\{([^}|]+)(?:|[^}]+)?\}\}/g.test(msg.cleanContent) || /--([^|]+?)--/g.test(msg.cleanContent)) {
 		// eslint-disable-next-line consistent-return
 		sql.get(`SELECT * FROM guilds WHERE id="${msg.guild.id}"`).then(row => {
@@ -121,129 +123,145 @@ bot.on('message', (msg) => {
 	bot.login(config.token);
 }); */
 
+const sentByAdmin = (msg) => {
+    return msg.author.id === config.admin_snowflake;
+};
+
 const commands = {
 	help: (msg) => {
 		msg.channel.send('Syntax and commands: <https://github.com/ThePsionic/WikiaLinker#syntax>');
 	},
 	restart: (msg) => {
-		if (msg.author.id !== config.admin_snowflake) return msg.channel.send("Sorry, Dave. I can't let you do that.");
-		return msg.channel.send('**Bot restarting!**')
-			.then(() => {
-				process.exit(1);
-			});
+		if (!sentByAdmin(msg)) {
+            msg.channel.send("Sorry, Dave. I can't let you do that.");
+        } else {
+            msg.channel.send('**Bot restarting!**')
+                .then(() => {
+                    process.exit(1);
+                });
+        }
 	},
 	bc: (msg, [globalMessage]) => {
-		if (msg.author.id !== config.admin_snowflake) {
+		if (!sentByAdmin(msg)) {
 			msg.reply("you don't get to yell at everyone!");
-			return;
-		}
-
-		sql.each('SELECT * FROM guilds', (err, row) => {
-			if (row.broadcastChannel && !err) {
-				if (row.broadcastChannel !== '-1') {
-					bot.channels.get(row.broadcastChannel).send(globalMessage);
-				}
-			} else if (bot.guilds.has(row.id)) {
-				defaultChannel(bot.guilds.get(row.id)).then(channel => {
-					channel.send(globalMessage);
-				});
-			}
-		}).catch(console.error);
+		} else {
+            sql.each('SELECT * FROM guilds', (err, row) => {
+                if (row.broadcastChannel && !err) {
+                    if (row.broadcastChannel !== '-1') {
+                        bot.channels.get(row.broadcastChannel).send(globalMessage);
+                    }
+                } else if (bot.guilds.has(row.id)) {
+                    defaultChannel(bot.guilds.get(row.id)).then(channel => {
+                        channel.send(globalMessage);
+                    });
+                }
+            }).catch(console.error);
+        }
 	},
 	swiki: (msg, [wiki]) => {
-		if (msg.author.id !== config.admin_snowflake) {
+		if (!sentByAdmin(msg)) {
 			if (!msg.member.hasPermission('ADMINISTRATOR')) {
 				msg.reply('You are not allowed to change the default wiki of this server.');
-				return;
 			}
-		}
-		wiki = wiki.split(' ')[0];
-		sql.get(`SELECT * FROM guilds WHERE id=${msg.guild.id}`).then(row => {
-			if (!row) {
-				sql.run('INSERT INTO guilds (mainWiki) VALUES (?)', [wiki]).then(() =>
-					msg.reply(`Wiki is now set to: ${wiki}`)
-				).catch(() => msg.reply('Database error - please contact the developer!'));
-			} else {
-				sql.run('UPDATE guilds SET mainWiki=? WHERE id=?', [wiki, msg.guild.id]).then(() =>
-					msg.reply(`Wiki is now set to: ${wiki}`));
-			}
-		}).catch(console.error);
+		} else {
+            wiki = wiki.split(' ')[0];
+            sql.get(`SELECT * FROM guilds WHERE id=${msg.guild.id}`).then(row => {
+                if (!row) {
+                    sql.run('INSERT INTO guilds (mainWiki) VALUES (?)', [wiki]).then(() =>
+                        msg.reply(`Wiki is now set to: ${wiki}`)
+                    ).catch(() => msg.reply('Database error - please contact the developer!'));
+                } else {
+                    sql.run('UPDATE guilds SET mainWiki=? WHERE id=?', [wiki, msg.guild.id]).then(() =>
+                        msg.reply(`Wiki is now set to: ${wiki}`));
+                }
+            }).catch(console.error);
+        }
 	},
 	cwiki: (msg, [wiki]) => {
-		if (msg.author.id !== config.admin_snowflake) {
+		if (!sentByAdmin(msg)) {
 			if (!msg.member.hasPermission('ADMINISTRATOR')) {
 				msg.reply('You are not allowed to change the default wiki of this server.');
-				return;
 			}
 		} else if (msg.channel.id === msg.guild.id) {
-			msg.reply('You can\'t override the default channel of a server.'); return;
-		}
-		console.log(wiki);
-		wiki = wiki.split(' ')[0];
-		sql.get(`SELECT * FROM overrides WHERE guildID="${msg.guild.id}" AND channelID="${msg.channel.id}"`).then(row => {
-			if (row) {
-				sql.run('UPDATE overrides SET wiki=? WHERE guildID=? AND channelID=?', [wiki, msg.guild.id, msg.channel.id]);
-			} else {
-				sql.run('INSERT INTO overrides (guildID, channelID, wiki) VALUES (?,?,?)', [msg.guild.id, msg.channel.id, wiki]);
-			}
-		}).then(() => msg.reply(`The wiki override for channel ${msg.channel.name} is now set to ${wiki}`)).catch(console.error);
+			msg.reply('You can\'t override the default channel of a server.');
+		} else {
+            console.log(wiki);
+            wiki = wiki.split(' ')[0];
+            sql.get(`SELECT * FROM overrides WHERE guildID="${msg.guild.id}" AND channelID="${msg.channel.id}"`).then(row => {
+                if (row) {
+                    sql.run('UPDATE overrides SET wiki=? WHERE guildID=? AND channelID=?', [wiki, msg.guild.id, msg.channel.id]);
+                } else {
+                    sql.run('INSERT INTO overrides (guildID, channelID, wiki) VALUES (?,?,?)', [msg.guild.id, msg.channel.id, wiki]);
+                }
+            }).then(() => msg.reply(`The wiki override for channel ${msg.channel.name} is now set to ${wiki}`)).catch(console.error);
+        }
 	},
 	bchan: (msg) => {
 		let channel;
-		if (msg.author.id !== config.admin_snowflake) {
+		if (!sentByAdmin(msg)) {
 			if (!msg.member.hasPermission('ADMINISTRATOR')) {
 				msg.reply('You are not allowed to change the broadcast channel of this server.');
-				return;
 			}
 		} else if (msg.mentions.channels.size > 1) {
 			msg.reply('You need to mention exactly one channel to be set as broadcast channel.');
-			return;
-		}
-
-		if (msg.cleanContent.split(' ')[1] === 'off') {
-			channel = { name: 'off', id: '-1' };
-		} else if (msg.mentions.channels.size === 0) {
-			channel = msg.channel;
 		} else {
-			channel = msg.mentions.channels.first();
-		}
-		console.log(`Channel is ${channel.name}`);
-		sql.get(`SELECT * FROM guilds WHERE id="${msg.guild.id}"`).then(row => {
-			console.log(row);
-			if (row) {
-				sql.run('UPDATE guilds SET broadcastChannel=? WHERE id=?', [channel.id, msg.guild.id]).then(() =>
-					msg.reply(`The broadcast channel for this server is now set to: ${channel.name}.`)
-				);
-			} else {
-				msg.reply('Database error - please contact the developer!');
-			}
-		});
+
+            if (msg.cleanContent.split(' ')[1] === 'off') {
+                channel = {name: 'off', id: '-1'};
+            } else if (msg.mentions.channels.size === 0) {
+                channel = msg.channel;
+            } else {
+                channel = msg.mentions.channels.first();
+            }
+            console.log(`Channel is ${channel.name}`);
+            sql.get(`SELECT * FROM guilds WHERE id="${msg.guild.id}"`).then(row => {
+                console.log(row);
+                if (row) {
+                    sql.run('UPDATE guilds SET broadcastChannel=? WHERE id=?', [channel.id, msg.guild.id]).then(() =>
+                        msg.reply(`The broadcast channel for this server is now set to: ${channel.name}.`)
+                    );
+                } else {
+                    msg.reply('Database error - please contact the developer!');
+                }
+            });
+        }
 	},
 	sinfo: (msg) => {
-		if (!msg.guild) return;
-		sql.get(`SELECT * FROM guilds WHERE id="${msg.guild.id}"`).then(row => {
-			var totalMessage = `\`\`\`\nInfo for server: ${msg.guild.name}`;
-			if (!row.broadcastChannel) totalMessage += '\nNo broadcast channel set';
-			else if (row.broadcastChannel === '-1') totalMessage += '\nBroadcasting turned off for this server';
-			else totalMessage += `\nBroadcast channel: ${msg.guild.channels.get(row.broadcastChannel).name}`;
+		if (!msg.guild) {
+		    // do nothing
 
-			if (!row.mainWiki) totalMessage += '\nNo main wiki set';
-			else totalMessage += `\nMain wiki: ${row.mainWiki}`;
+		} else {
+            sql.get(`SELECT * FROM guilds WHERE id="${msg.guild.id}"`).then(row => {
+                let totalMessage = `\`\`\`\nInfo for server: ${msg.guild.name}`;
+                if (!row.broadcastChannel) {
+                    totalMessage += '\nNo broadcast channel set';
+                } else if (row.broadcastChannel === '-1') {
+                    totalMessage += '\nBroadcasting turned off for this server';
+                } else {
+                    totalMessage += `\nBroadcast channel: ${msg.guild.channels.get(row.broadcastChannel).name}`;
+                }
 
-			sql.all(`SELECT * FROM overrides WHERE guildID="${msg.guild.id}"`).then(rows => {
-				if (rows.length === 0) {
-					totalMessage += '\nNo channel overrides set';
-				} else {
-					totalMessage += '\nChannel overrides:';
-					for (let i = 0; i < rows.length; i++) {
-						totalMessage += `\n  Wiki ${rows[i].wiki} in channel ${msg.guild.channels.get(rows[i].channelID).name}`;
-					}
-				}
+                if (!row.mainWiki) {
+                    totalMessage += '\nNo main wiki set';
+                } else {
+                    totalMessage += `\nMain wiki: ${row.mainWiki}`;
+                }
 
-				totalMessage += '\n```';
-				msg.channel.send(totalMessage);
-			}).catch(console.error);
-		}).catch(console.error);
+                sql.all(`SELECT * FROM overrides WHERE guildID="${msg.guild.id}"`).then(rows => {
+                    if (rows.length === 0) {
+                        totalMessage += '\nNo channel overrides set';
+                    } else {
+                        totalMessage += '\nChannel overrides:';
+                        for (let i = 0; i < rows.length; i++) {
+                            totalMessage += `\n  Wiki ${rows[i].wiki} in channel ${msg.guild.channels.get(rows[i].channelID).name}`;
+                        }
+                    }
+
+                    totalMessage += '\n```';
+                    msg.channel.send(totalMessage);
+                }).catch(console.error);
+            }).catch(console.error);
+        }
 	}
 };
 
