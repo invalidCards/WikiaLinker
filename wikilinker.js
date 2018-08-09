@@ -137,7 +137,7 @@ const sentByAnyAdmin = (msg) => {
 
 const commands = {
 	help: (msg) => {
-		msg.channel.send('Syntax and commands: <http://thepsionic.com/bots/wikialinker/>');
+		msg.channel.send('Syntax and commands: <https://psi.codes/bots/wikialinker/>');
 	},
 	restart: (msg) => {
 		if (!sentByBotAdmin(msg)) {
