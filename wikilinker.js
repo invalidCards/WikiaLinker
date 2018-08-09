@@ -45,7 +45,7 @@ bot.on('message', (msg) => {
 		const args = msg.content.slice(config.prefix.length).split(/ (.+)/);
 		const command = args.shift();
 		if (commands.hasOwnProperty(command)) {
-		    commands[command](msg, args);
+			commands[command](msg, args);
 		}
 	} else if (/\[\[([^\]|]+)(?:|[^\]]+)?\]\]/g.test(msg.cleanContent) || /\{\{([^}|]+)(?:|[^}]+)?\}\}/g.test(msg.cleanContent) || /--([^|]+?)--/g.test(msg.cleanContent)) {
 		// eslint-disable-next-line consistent-return
@@ -99,7 +99,7 @@ bot.on('message', (msg) => {
 						const unique = new Set(allLinks);
 
 						unique.forEach((item) => {
-							mps.push(`<http://${wiki}.wikia.com/wiki/${item.trim().replace(/\s/g, '_')}>`);
+							mps.push(`<http://${wiki}.wikia.com/wiki/${wikiUrlencode(item.trim())}>`);
 						});
 					}
 
@@ -230,7 +230,7 @@ const commands = {
 	},
 	sinfo: (msg) => {
 		if (!msg.guild) {
-		    // do nothing
+			// do nothing
 
 		} else {
 			sql.get(`SELECT * FROM guilds WHERE id="${msg.guild.id}"`).then(row => {
@@ -297,6 +297,17 @@ const defaultChannel = (guild) => new Promise((resolve, reject) => {
 		return reject('No applicable channel found.');
 	}
 });
+
+const wikiUrlencode = (url) => encodeURIComponent(url)
+	.replace(/!/g, '%21')
+	.replace(/'/g, '%27')
+	.replace(/\(/g, '%28')
+	.replace(/\)/g, '%29')
+	.replace(/\*/g, '%2A')
+	.replace(/~/g, '%7E')
+	.replace(/%20/g, '_')
+	.replace(/%3A/g, ':')
+	.replace(/%2F/g, '/');
 
 if (config.admin_snowflake === '') {
 	console.log('Admin snowflake empty. Startup disallowed.');
