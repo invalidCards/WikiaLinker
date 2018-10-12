@@ -99,7 +99,6 @@ const doLookup = (msg, throughCommand, cmdType) => {
 						mps.push(`<http://${wiki}.wikia.com/wiki/${article.trim().replace(/\s/g, '_')}>`);
 						break;
 					}
-					mps.push('*This bot is no longer being actively developed. For details, see <https://psi.codes/bots/wikialinker-end-of-dev>.*');
 					Promise.all(mps).then(preparedSend => {
 						preparedSend = preparedSend.filter(item => item !== undefined);
 						if (preparedSend.length > 1) {
@@ -150,8 +149,6 @@ const doLookup = (msg, throughCommand, cmdType) => {
 						});
 					}
 
-					mps.push('*This bot is no longer being actively developed. For details, see <https://psi.codes/bots/wikialinker-end-of-dev>.*');
-
 					Promise.all(mps)
 						.then(preparedSend => {
 							preparedSend = preparedSend.filter(item => item !== undefined);
@@ -181,6 +178,7 @@ const sentByAnyAdmin = (msg) => {
 const commands = {
 	help: (msg) => {
 		msg.channel.send([
+			'*This bot is no longer being actively developed. For details, see <https://psi.codes/bots/wikialinker-end-of-dev>.*',
 			'```md',
 			'# COMMAND LIST',
 			'<wl!swiki    set the wiki for the entire server to use>',
